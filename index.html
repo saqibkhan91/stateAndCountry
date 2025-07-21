@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,6 +42,28 @@
         select:disabled {
             background-color: #e9e9e9;
         }
+        .flag {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .selected-flag {
+            display: block;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            object-fit: contain;
+        }
+        .selection-message {
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        option {
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -60,18 +81,32 @@
             <option value="">Select a state</option>
         </select>
     </div>
+    <div id="selection-output">
+        <img id="selected-flag" class="selected-flag" style="display: none;">
+        <p id="selection-message" class="selection-message"></p>
+    </div>
 </div>
 
 <script src="countryAndStates.js"></script>
 <script>
     const countrySelect = document.getElementById('country');
     const stateSelect = document.getElementById('state');
+    const selectedFlag = document.getElementById('selected-flag');
+    const selectionMessage = document.getElementById('selection-message');
+
+    // Function to get flag emoji from iso2 code
+    function getFlagEmoji(iso2) {
+        if (!iso2) return '';
+        const codePoints = iso2.toUpperCase().split('').map(char => 127397 + char.charCodeAt());
+        return String.fromCodePoint(...codePoints);
+    }
 
     // Populate country dropdown
     countries.forEach(country => {
         const option = document.createElement('option');
-        option.value = country.iso2; // Using iso2 as value for uniqueness
-        option.textContent = country.name;
+        option.value = country.iso2;
+        const flag = country.flag ? `<img src="${country.flag}" alt="${country.name} flag" class="flag">` : getFlagEmoji(country.iso2);
+        option.innerHTML = `${flag} ${country.name}`;
         countrySelect.appendChild(option);
     });
 
@@ -82,9 +117,23 @@
             const selectedCountry = countries.find(country => country.iso2 === selectedCountryIso2);
             populateStates(selectedCountry.states);
             stateSelect.disabled = false;
+            updateSelection(selectedCountry, null);
         } else {
             stateSelect.innerHTML = '<option value="">Select a state</option>';
             stateSelect.disabled = true;
+            resetSelection();
+        }
+    });
+
+    // Event listener for state selection
+    stateSelect.addEventListener('change', function() {
+        const selectedCountryIso2 = countrySelect.value;
+        const selectedState = this.value;
+        if (selectedCountryIso2 && selectedState) {
+            const selectedCountry = countries.find(country => country.iso2 === selectedCountryIso2);
+            updateSelection(selectedCountry, selectedState);
+        } else {
+            updateSelection(countries.find(country => country.iso2 === selectedCountryIso2), null);
         }
     });
 
@@ -97,6 +146,35 @@
             option.textContent = state;
             stateSelect.appendChild(option);
         });
+    }
+
+    // Function to update selection output
+    function updateSelection(country, state) {
+        if (country && country.flag) {
+            selectedFlag.src = country.flag;
+            selectedFlag.alt = `${country.name} flag`;
+            selectedFlag.style.display = 'block';
+        } else if (country) {
+            // If no flag URL, display emoji in a larger font for visibility
+            selectedFlag.style.display = 'none';
+            selectionMessage.innerHTML = `<span style="font-size: 100px; display: block; margin: 20px auto; text-align: center;">${getFlagEmoji(country.iso2)}</span>`;
+        } else {
+            selectedFlag.style.display = 'none';
+        }
+
+        if (country && state) {
+            selectionMessage.textContent = `Your country is ${country.name} and your state is ${state}.`;
+        } else if (country) {
+            selectionMessage.textContent = `Your country is ${country.name}.`;
+        } else {
+            selectionMessage.textContent = '';
+        }
+    }
+
+    // Function to reset selection output
+    function resetSelection() {
+        selectedFlag.style.display = 'none';
+        selectionMessage.textContent = '';
     }
 </script>
 </body>
