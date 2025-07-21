@@ -150,22 +150,23 @@
 
     // Function to update selection output
     function updateSelection(country, state) {
-        if (country && country.flag) {
-            selectedFlag.src = country.flag;
+        if (country) {
+            // Always use emoji as fallback if flag URL is unavailable or fails
+            selectedFlag.src = country.flag || '';
             selectedFlag.alt = `${country.name} flag`;
-            selectedFlag.style.display = 'block';
-        } else if (country) {
-            // If no flag URL, display emoji in a larger font for visibility
-            selectedFlag.style.display = 'none';
-            selectionMessage.innerHTML = `<span style="font-size: 100px; display: block; margin: 20px auto; text-align: center;">${getFlagEmoji(country.iso2)}</span>`;
+            selectedFlag.style.display = country.flag ? 'block' : 'none';
+            selectedFlag.onerror = () => {
+                selectedFlag.style.display = 'none';
+                selectionMessage.innerHTML = `<span style="font-size: 100px; display: block; margin: 20px auto; text-align: center;">${getFlagEmoji(country.iso2)}</span>` + selectionMessage.innerHTML;
+            };
         } else {
             selectedFlag.style.display = 'none';
         }
 
         if (country && state) {
-            selectionMessage.textContent = `Your country is ${country.name} and your state is ${state}.`;
+            selectionMessage.innerHTML = `Your country is <strong>${country.name}</strong> and your state is <strong>${state}</strong>.`;
         } else if (country) {
-            selectionMessage.textContent = `Your country is ${country.name}.`;
+            selectionMessage.innerHTML = `Your country is <strong>${country.name}</strong>.`;
         } else {
             selectionMessage.textContent = '';
         }
